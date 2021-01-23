@@ -5,7 +5,7 @@ import scrapy
 
 from scrapy.loader import ItemLoader
 from scrapy.exceptions import CloseSpider
-from fb_group_spider.items import FbGroupSpiderItem, parse_date
+from fb_group_spider.items import FbGroupSpiderItem, parse_date, parse_date2
 
 class FbGroupSpider(scrapy.Spider):
     '''
@@ -40,15 +40,24 @@ class FbGroupSpider(scrapy.Spider):
         self.contains_old_post = []
         # selecting all posts
         for post in response.xpath("//article[contains(@data-ft, 'top_level_post_id')] | //div[contains(@data-ft, 'top_level_post_id')]"):
-
+            
+            # if possible get date from @data-ft
             features = post.xpath('./@data-ft').get()
             date = []
             
             date.append(features)
             date = parse_date(date)
 
-            post_publish_date = datetime.datetime.strptime(date,'%Y-%m-%d %H:%M:%S')
-            
+            post_publish_date = datetime.datetime.strptime(date,'%Y-%m-%d %H:%M:%S') if date is not None else date
+
+            # if date is none, now have to pass to another parser to extract from post text
+            if post_publish_date is None:
+                date_string = post.xpath('.//abbr/text()').get()
+                date = parse_date2([date_string],{'lang':'en'})
+
+                post_publish_date = datetime.datetime(date.year,date.month,date.day) if date is not None else date
+                date = str(date)
+
             self.logger.info('Post found with date {}'.format(date))
 
             if post_publish_date > self.three_week_before:
