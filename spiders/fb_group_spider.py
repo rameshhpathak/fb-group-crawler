@@ -39,7 +39,7 @@ class FbGroupSpider(scrapy.Spider):
         '''
         self.contains_old_post = []
         # selecting all posts
-        for post in response.xpath("//article[contains(@data-ft, 'top_level_post_id')]"):
+        for post in response.xpath("//article[contains(@data-ft, 'top_level_post_id')] | //div[contains(@data-ft, 'top_level_post_id')]"):
 
             features = post.xpath('./@data-ft').get()
             date = []
@@ -120,7 +120,7 @@ class FbGroupSpider(scrapy.Spider):
 
     def parse_post(self,response):
         new = ItemLoader(item=FbGroupSpiderItem(),response=response,parent=response.meta['item'])
-        new.add_xpath('text','//div[@data-ft]//p//text() | //div[@data-ft]/div[@class]/div[@class]/text()')
+        new.add_xpath('text','//div[@data-ft]//p//text() | //div[@data-ft]/div[@class]//div[@class]/div[@class]/text() | //div[@data-ft]//div[@class]/ul[@class]/li[@class]/text()')
         new.add_xpath('img', '//div[@data-ft]//div[@class]/div[@class]/a[@href]//img/@src')
         
         yield new.load_item()
