@@ -97,6 +97,9 @@ class FbGroupSpider(scrapy.Spider):
             else:
                 while not new_page: #sometimes the years are skipped this handles small year gaps
                     self.logger.info('Link not found for year {}, trying with previous year {}'.format(self.k,self.k-1))
+                    # skip/limit the year to only past 1 year, this will stop crawler once the previous year is finished
+                    if self.k < self.now.year - 2:
+                        raise CloseSpider('Reached previous year. No need to crawl. Crawling finished')
                     self.k -= 1
                     xpath = "//div/a[contains(@href,'time') and contains(text(),'" + str(self.k) + "')]/@href"
                     new_page = response.xpath(xpath).extract()
